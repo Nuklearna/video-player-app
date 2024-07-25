@@ -4,33 +4,34 @@ import Transcript from './components/Transcript';
 import './App.css';
 
 const App = () => {
-    //Defining states with params
-    const [captions1, setCaptions1] = useState([]);
-    const [currentTime1, setCurrentTime1] = useState(0);
-    const [captions2, setCaptions2] = useState([]);
-    const [currentTime2, setCurrentTime2] = useState(0);
+    
+    const initialvalues = {
+        font: "Arial",
+        size: "20px",
+        color: '#ffffff'
+    };
+      
+    //Defining states
+    const [captions, setCaptions] = useState([]); 
+    const [currentTime, setCurrentTime] = useState(0);
     const [selectedVideo, setSelectedVideo] = useState(1);
-
-    const [captionFont, setCaptionFont] = useState('Arial');
-    const [captionSize, setCaptionSize] = useState('20px');
-    const [captionColor, setCaptionColor] = useState('#FFFFFF');
+    const [captionSettings, setCaptionSetings] = useState(initialvalues)
 
     //Fetch captions for videos
     useEffect(() => {
-        fetch('/video_1/captions.srt')
-            .then(response => response.text())
-            .then(data => {
+        const fetchCaptions = async () => {
+            try {
+                const response = await fetch(`/video_${selectedVideo}/captions.srt`);
+                const data = await response.text();
                 const parsedCaptions = parseSRT(data);
-                setCaptions1(parsedCaptions);
-            });
+                setCaptions(parsedCaptions);
+            } catch (error) {
+                console.error('Error fetching captions:', error);
+            }
+        };
 
-        fetch('/video_2/captions.srt')
-            .then(response => response.text())
-            .then(data => {
-                const parsedCaptions = parseSRT(data);
-                setCaptions2(parsedCaptions);
-            });
-    }, []);
+        fetchCaptions();
+    }, [selectedVideo]);
 
     //Parses the SRT file content into an array of captions
     const parseSRT = (data) => {
@@ -49,7 +50,7 @@ const App = () => {
             while (i < lines.length && lines[i].trim()) {
                 text += lines[i++].trim() + ' ';
             }
-            i++;  //Skip empty line after the caption block
+            i++;  // Skip empty line after the caption block
 
             captions.push({ start, end, text });
         }
@@ -69,36 +70,24 @@ const App = () => {
         return (hours * 3600) + (minutes * 60) + seconds + (milliseconds / 1000);
     };
 
-    //Handles clicking on a transcript line for video1
-    const handleTranscriptClick1 = (time) => {
-        const video = document.querySelector('#video1');
+    //Handles clicking on a transcript line for videos
+    const handleTranscriptClick = (time) => {
+        const video = document.querySelector(`#video${selectedVideo}`);
         video.currentTime = time;
     };
 
-    //Handles clicking on a transcript line for video2
-    const handleTranscriptClick2 = (time) => {
-        const video = document.querySelector('#video2');
-        video.currentTime = time;
+   //Handles video selection change
+     const handleVideoSelect = (videoNumber) => {
+      setSelectedVideo(videoNumber);
     };
 
-    //Handles video selection change
-    const handleVideoSelect = (videoNumber) => {
-        setSelectedVideo(videoNumber);
-    };
-
-    //Handles font change for captions
-    const handleFontChange = (event) => {
-        setCaptionFont(event.target.value);
-    };
-
-    //Handles font size change for captions
-    const handleSizeChange = (event) => {
-        setCaptionSize(event.target.value + 'px');
-    };
-
-    //Handles color change for captions
-    const handleColorChange = (event) => {
-        setCaptionColor(event.target.value);
+    //Handles caption style change
+    const handleCaptionChange = (event) => {
+        const { name, value } = event.target;
+        setCaptionSetings(prevSettings => ({
+            ...prevSettings,
+            [name]: value
+        }));
     };
 
     //Rendering and returning videos with components VideoPlayer and Transcript with all functionality with captions, video switches(buttons) and options for changing captions font, font size and color 
@@ -107,44 +96,43 @@ const App = () => {
             {selectedVideo === 1 && (
                 <div className="video-section">
                     <VideoPlayer
-                        videoId="video1"
-                        videoSrc="/video_1/clip.mp4"
-                        captions={captions1}
-                        onTimeUpdate={setCurrentTime1}
-                        captionStyle={{
-                            fontFamily: captionFont,
-                            fontSize: captionSize,
-                            color: captionColor,
-                        }}
-                    />
+                            videoId={`video${selectedVideo}`}
+                            videoSrc={`/video_${selectedVideo}/clip.mp4`}
+                            captions={captions}
+                            onTimeUpdate={setCurrentTime}
+                            captionStyle={{
+                                fontFamily: captionSettings.font,
+                                fontSize: `${captionSettings.size}px`,
+                                color: captionSettings.color
+                            }}
+                        />
                     <Transcript
-                        captions={captions1}
-                        onTranscriptClick={handleTranscriptClick1}
-                        currentTime={currentTime1}
-                    />
+                            captions={captions}
+                            onTranscriptClick={handleTranscriptClick}
+                            currentTime={currentTime}
+                        />
                 </div>
             )}
             {selectedVideo === 2 && (
                 <div className="video-section">
                     <VideoPlayer
-                        videoId="video2"
-                        videoSrc="/video_2/clip.mp4"
-                        captions={captions2}
-                        onTimeUpdate={setCurrentTime2}
-                        captionStyle={{
-                            fontFamily: captionFont,
-                            fontSize: captionSize,
-                            color: captionColor,
-                        }}
-                    />
+                            videoId={`video${selectedVideo}`}
+                            videoSrc={`/video_${selectedVideo}/clip.mp4`}
+                            captions={captions}
+                            onTimeUpdate={setCurrentTime}
+                            captionStyle={{
+                                fontFamily: captionSettings.font,
+                                fontSize: `${captionSettings.size}px`,
+                                color: captionSettings.color
+                            }}
+                        />
                     <Transcript
-                        captions={captions2}
-                        onTranscriptClick={handleTranscriptClick2}
-                        currentTime={currentTime2}
-                    />
+                            captions={captions}
+                            onTranscriptClick={handleTranscriptClick}
+                            currentTime={currentTime}
+                        />
                 </div>
             )}
-
             <div className='select-caption-section'>
                 <div className="select-video-buttons">
                     <button className='button-primary' onClick={() => handleVideoSelect(1)}>Video 1</button>
@@ -155,7 +143,7 @@ const App = () => {
                     <div className='caption-style-containter'>
                         <label>
                             Font:
-                            <select value={captionFont} onChange={handleFontChange}>
+                            <select name="font" value={captionSettings.font} onChange={handleCaptionChange}>
                                 <option value="Arial">Arial</option>
                                 <option value="Courier New">Courier New</option>
                                 <option value="Georgia">Georgia</option>
@@ -167,8 +155,9 @@ const App = () => {
                             Size in px:
                             <input
                                 type="number"
-                                value={parseInt(captionSize, 10)}
-                                onChange={handleSizeChange}
+                                name="size"
+                                value={parseInt(captionSettings.size, 10)}
+                                onChange={handleCaptionChange}
                                 min="10"
                                 max="50"
                             />
@@ -177,8 +166,9 @@ const App = () => {
                             Color:
                             <input
                                 type="color"
-                                value={captionColor}
-                                onChange={handleColorChange}
+                                name="color"
+                                value={captionSettings.color}
+                                onChange={handleCaptionChange}
                             />
                         </label>
                     </div>

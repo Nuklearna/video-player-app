@@ -1,17 +1,18 @@
 import React, { useRef, useEffect, useState } from 'react';
 import '../App.css';
 
-const VideoPlayer = ({ videoSrc, captions, onTimeUpdate, videoId, captionStyle }) => {
+
+const VideoPlayer = ({ videoSrc, captions = [], onTimeUpdate, videoId, captionStyle }) => {
     const videoRef = useRef(null);
     const [currentCaption, setCurrentCaption] = useState('');
 
-    /**
-     * Handles the time update event of the video.
-     * Finds the active caption based on the current time and updates the current caption state (transcript).
-    */
+        /**
+         * Handles the time update event of the video.
+         * Finds the active caption based on the current time and updates the current caption state.
+         */
     useEffect(() => {
         const video = videoRef.current;
-        
+
         const handleTimeUpdate = () => {
             const currentTime = video.currentTime;
             const activeCaption = captions.find(
@@ -35,7 +36,6 @@ const VideoPlayer = ({ videoSrc, captions, onTimeUpdate, videoId, captionStyle }
             video.removeEventListener('timeupdate', handleTimeUpdate);
         };
     }, [captions, onTimeUpdate]);
-
     // Renders video with captions compoment
     return (
         <div className="video-container">
